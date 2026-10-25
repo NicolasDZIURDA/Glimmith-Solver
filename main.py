@@ -66,14 +66,7 @@ region_size = next(
     None
 )
 
-solutions = solve(
-    puzzle["grid"],
-    region_size,
-    wall_list=puzzle.get("walls", []),
-    max_solutions=2,
-)
-
-#solutions = solve(puzzle, max_solutions=2)
+solutions = solve(puzzle, max_solutions=2)
 
 if len(solutions) == 0:
     print("Aucune solution.")

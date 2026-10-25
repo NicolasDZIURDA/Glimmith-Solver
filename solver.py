@@ -52,53 +52,57 @@ def validate_walls(wall_list, valid_cells):
         
     return walls
 
-def generate_regions(grid, region_size, wall_list=None):
+def generate_regions(puzzle, region_size):
     """Génère les régions connexes sans franchir les séparations."""
-    height = len(grid)
-    width = len(grid[0])
+    height = len(puzzle["grid"])
+    width = len(puzzle["grid"][0])
 
     valid = {
         (r, c)
         for r in range(height)
         for c in range(width)
-        if grid[r][c] == "."
+        if puzzle["grid"][r][c] == "."
     }
     
-    walls = validate_walls(wall_list, valid)
-
-    if region_size <= 0:
-        raise ValueError("La taille des régions doit être positive.")
-
-    if region_size > len(valid):
-        return valid, []
+    walls = validate_walls(puzzle.get("walls", []), valid)
 
     # Chaque case valide constitue une région
     regions = {frozenset({cell}) for cell in valid}
+    all_regions = set(regions)
 
-    for _ in range(1, region_size):
+    while regions:
         expanded = set()
 
         for region in regions:
+            if region_size is not None and len(region) >= region_size:
+                continue
+            
             for cell in region:
                 for neighbor in neighbors(
                     cell, height, width, valid, walls
                 ):
-                    edge = frozenset((cell, neighbor))
-
-                    if edge in walls:
-                        continue
-
                     if neighbor not in region and not crosses_wall(region, neighbor, walls):
                         expanded.add(region | {neighbor})
-
+        
+        if region_size is not None:
+            all_regions = {
+                region for region in all_regions
+                if len(region) == region_size
+            }                     
+        all_regions.update(expanded)
         regions = expanded
 
-    return valid, list(regions)
+    return valid, list(all_regions)
 
 
-def solve(grid, region_size, wall_list=None, max_solutions=2):
+def solve(puzzle, max_solutions=2):
     """Recherche des partitions complètes, jusqu'à max_solutions."""
-    valid, regions = generate_regions(grid, region_size, wall_list)
+    region_size = next(
+        (rule["value"] for rule in puzzle["rules"] if rule["type"] == "precision"),
+        None
+    )
+    
+    valid, regions = generate_regions(puzzle, region_size)
 
     if region_size is not None and len(valid) % region_size != 0:
         return []
