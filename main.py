@@ -44,8 +44,6 @@ def validate_grid(grid):
             if char not in {".", "#"}:
                 raise ValueError(f"Caractère invalide '{char}' ")
 
-    print("Grille valide.")
-
 puzzle = choose_puzzle()
 
 validate_grid(puzzle["grid"])
@@ -71,10 +69,8 @@ solutions = solve(puzzle, max_solutions=2)
 if len(solutions) == 0:
     print("Aucune solution.")
 elif len(solutions) == 1:
-    print("Une solution trouvée.")
-    print("Attention : l'unicité n'est confirmée que si "
-            "la recherche a été exhaustive.")
-    display_solution(puzzle["grid"], solutions[0], wall_list=puzzle.get("walls", []))
+    print("Solution trouvée !")
+    display_solution(puzzle, solutions[0])
 else:
     print("Plusieurs solutions : au moins 2.")
-    display_solution(puzzle["grid"], solutions[0], wall_list=puzzle.get("walls", []))
+    display_solution(puzzle, solutions[0])

@@ -1,3 +1,4 @@
+from symbols import *
 
 def neighbors(cell, height, width, valid_cells, walls):
     """Retourne les voisins accessibles sans franchir de séparation."""
@@ -65,6 +66,7 @@ def generate_regions(puzzle, region_size):
     }
     
     walls = validate_walls(puzzle.get("walls", []), valid)
+    rules = {rule["type"] for rule in puzzle["rules"]}
 
     # Chaque case valide constitue une région
     regions = {frozenset({cell}) for cell in valid}
@@ -81,16 +83,41 @@ def generate_regions(puzzle, region_size):
                 for neighbor in neighbors(
                     cell, height, width, valid, walls
                 ):
-                    if neighbor not in region and not crosses_wall(region, neighbor, walls):
-                        expanded.add(region | {neighbor})
-        
-        if region_size is not None:
-            all_regions = {
-                region for region in all_regions
-                if len(region) == region_size
-            }                     
+                    if neighbor in region:
+                        continue
+
+                    if crosses_wall(region, neighbor, walls):
+                        continue
+                    
+                    expanded.add(region | {neighbor})
+            
         all_regions.update(expanded)
         regions = expanded
+        
+    # Filtre sur la taille
+    if "precision" in rules:
+        all_regions = {
+            region for region in all_regions
+            if len(region) == region_size
+        }
+        
+    # Filtre sur les symboles
+    symbols = puzzle.get("symbols") or {}
+    symbol_positions = {
+        symbol_type: {tuple(pos) for pos in positions}
+        for symbol_type, positions in symbols.items()
+    }
+    
+    if "symbols" in rules:
+        all_regions = {
+            region for region in all_regions
+            if has_one_each_symbol(region, symbol_positions)
+        }
+        
+    region1 = frozenset({(0, 0), (0, 1), (0, 2), (0, 3)})
+    region2 = frozenset({(0, 2), (1, 2), (2, 2), (3, 2)})
+    print(f"Région 1 : {has_one_each_symbol(region1, symbol_positions)}")
+    print(f"Région 2 : {has_one_each_symbol(region2, symbol_positions)}")
 
     return valid, list(all_regions)
 

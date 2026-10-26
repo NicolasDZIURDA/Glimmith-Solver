@@ -3,8 +3,9 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from matplotlib.collections import LineCollection
 
-def display_solution(grid, solution, wall_list=None):
+def display_solution(puzzle, solution):
     """Affiche les régions dans le terminal et crée solution.png."""
+    grid = [list(row) for row in puzzle["grid"]]
     height = len(grid)
     width = len(grid[0])
 
@@ -52,7 +53,7 @@ def display_solution(grid, solution, wall_list=None):
 
     walls = {
         frozenset((tuple(a), tuple(b)))
-        for a, b in (wall_list or [])
+        for a, b in (puzzle.get("walls", []) or [])
     }
     
     for index, region in enumerate(solution):
@@ -99,8 +100,27 @@ def display_solution(grid, solution, wall_list=None):
                 color="black", linewidth=4,
                 solid_capstyle="butt",
             )
+            
+    symbols = puzzle.get("symbols") or {}
+    symbol_chars = {
+        "red": "R",
+        "blue": "B",
+        "yellow": "Y"
+    }
+            
+    for symbol_type, positions in symbols.items():
+        char = symbol_chars.get(symbol_type, "?")
 
-    print("\nSolution :")
+        for r, c in positions:
+            ax.text(
+                c + 0.5,
+                height - r - 0.5,
+                char,
+                ha="center",
+                va="center",
+                fontsize=16,
+                fontweight="bold"
+            )
 
     ax.set_xlim(0, width)
     ax.set_ylim(0, height)
