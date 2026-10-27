@@ -48,7 +48,7 @@ puzzle = choose_puzzle()
 
 validate_grid(puzzle["grid"])
 
-supported_rules = ["precision", "symbols"]
+supported_rules = ["precision", "symbols", "shape_bank"]
 
 unsupported = [
     rule["type"]
@@ -59,18 +59,10 @@ unsupported = [
 if unsupported:
     raise ValueError(f"Règles non encore implémentées : {unsupported}")
 
-region_size = next(
-    (rule["value"] for rule in puzzle["rules"] if rule["type"] == "precision"),
-    None
-)
-
 solutions = solve(puzzle, max_solutions=2)
 
-if len(solutions) == 0:
-    print("Aucune solution.")
-elif len(solutions) == 1:
+if solutions:
     print("Solution trouvée !")
     display_solution(puzzle, solutions[0])
 else:
-    print("Plusieurs solutions : au moins 2.")
-    display_solution(puzzle, solutions[0])
+    print("Pas de solution trouvée.")

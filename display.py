@@ -2,6 +2,7 @@ import string
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from matplotlib.collections import LineCollection
+from pathlib import Path
 
 def display_solution(puzzle, solution):
     """Affiche les régions dans le terminal et crée solution.png."""
@@ -105,7 +106,9 @@ def display_solution(puzzle, solution):
     symbol_chars = {
         "red": "R",
         "blue": "B",
-        "yellow": "Y"
+        "yellow": "Y",
+        "green": "G",
+        "purple": "P"
     }
             
     for symbol_type, positions in symbols.items():
@@ -126,8 +129,13 @@ def display_solution(puzzle, solution):
     ax.set_ylim(0, height)
     ax.set_aspect("equal")
     ax.axis("off")
+    
+    Path("Solutions").mkdir(parents=True, exist_ok=True)
 
-    plt.savefig("solution.png", dpi=200, bbox_inches="tight", pad_inches=0)
+    plt.savefig(
+        f"./Solutions/solution_{puzzle.get('name', 'sans_nom')}.png",
+        dpi=200,
+        bbox_inches="tight",
+        pad_inches=0
+    )
     plt.close(fig)
-
-    print("\nImage enregistrée dans solution.png")
