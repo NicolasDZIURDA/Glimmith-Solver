@@ -1,4 +1,5 @@
-from symbols import *
+from Rules.symbols import *
+from Rules.shape_bank import *
 
 def neighbors(cell, height, width, valid_cells, walls):
     """Retourne les voisins accessibles sans franchir de séparation."""
@@ -51,40 +52,7 @@ def validate_walls(wall_list, valid_cells):
 
         walls.add(frozenset((a, b)))
         
-    return walls
-
-def normalize_shape(cells):
-    """Retourne une signature indépendante de la position,
-    de la rotation et de la symétrie de la forme.
-    """
-    transformations = [
-        lambda r, c: (r, c),
-        lambda r, c: (r, -c),
-        lambda r, c: (-r, c),
-        lambda r, c: (-r, -c),
-        lambda r, c: (c, r),
-        lambda r, c: (c, -r),
-        lambda r, c: (-c, r),
-        lambda r, c: (-c, -r),
-    ]
-
-    variants = []
-
-    for transform in transformations:
-        transformed = [transform(r, c) for r, c in cells]
-
-        min_r = min(r for r, c in transformed)
-        min_c = min(c for r, c in transformed)
-
-        normalized = tuple(sorted(
-            (r - min_r, c - min_c)
-            for r, c in transformed
-        ))
-
-        variants.append(normalized)
-        
-    return min(variants)
-    
+    return walls    
 
 def generate_regions(puzzle, region_size):
     """Génère les régions connexes sans franchir les séparations."""
@@ -107,74 +75,22 @@ def generate_regions(puzzle, region_size):
         for symbol_type, positions in symbols.items()
     }
     
+    if "symbols" in rules and "shape_bank" not in rules:
+        print("Test passé")
+        return valid, generate_symbol_regions(
+            valid,
+            height,
+            width,
+            walls,
+            symbol_positions,
+            neighbors,
+            crosses_wall,
+            region_size,
+        )
+    
     # Génération directe pour la banque de formes
     if "shape_bank" in rules:
-        all_regions = set()
-
-        transformations = [
-            lambda r, c: (r, c),
-            lambda r, c: (r, -c),
-            lambda r, c: (-r, c),
-            lambda r, c: (-r, -c),
-            lambda r, c: (c, r),
-            lambda r, c: (c, -r),
-            lambda r, c: (-c, r),
-            lambda r, c: (-c, -r),
-        ]
-
-        for shape in puzzle.get("shape_bank", []):
-            variants = set()
-
-            for transform in transformations:
-                transformed = [
-                    transform(r, c) for r, c in shape
-                ]
-                min_r = min(r for r, c in transformed)
-                min_c = min(c for r, c in transformed)
-
-                variant = tuple(sorted(
-                    (r - min_r, c - min_c)
-                    for r, c in transformed
-                ))
-                variants.add(variant)
-
-            for variant in variants:
-                shape_height = max(r for r, c in variant) + 1
-                shape_width = max(c for r, c in variant) + 1
-
-                for start_r in range(height - shape_height + 1):
-                    for start_c in range(width - shape_width + 1):
-                        region = frozenset(
-                            (start_r + r, start_c + c)
-                            for r, c in variant
-                        )
-
-                        if not region <= valid:
-                            continue
-
-                        if any(wall <= region for wall in walls):
-                            continue
-
-                        if (
-                            "symbols_one_each" in rules
-                            and not has_one_each_symbol(
-                                region, symbol_positions
-                            )
-                        ):
-                            continue
-
-                        if (
-                            "symbols" in rules
-                            and has_too_many_symbols(
-                                region, symbol_positions
-                            )
-                        ):
-                            continue
-
-                        all_regions.add(region)
-
-        print(f"Placements valides de la banque : {len(all_regions)}")
-        return valid, list(all_regions)
+        return generate_shape_regions(puzzle, valid, walls)
 
     # Chaque case valide constitue une région
     regions = {frozenset({cell}) for cell in valid}
@@ -182,7 +98,7 @@ def generate_regions(puzzle, region_size):
 
     while regions:
         expanded = set()
-        print(len(regions))
+        print("ici")
 
         for region in regions:
             if region_size is not None and len(region) >= region_size:
@@ -217,6 +133,7 @@ def generate_regions(puzzle, region_size):
         
     # Filtre sur les symboles
     if "symbols" in rules:
+
         all_regions = {
             region for region in all_regions
             if has_one_each_symbol(region, symbol_positions)
